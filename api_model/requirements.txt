@@ -1,0 +1,4 @@
+tweepy==4.14.0             # Twitter API wrapper
+python-dotenv==1.0.1       # Load environment variables from .env
+schedule==1.2.1            # Task scheduling for automated reports
+requests==2.31.0           # HTTP requests (if needed for API calls)
