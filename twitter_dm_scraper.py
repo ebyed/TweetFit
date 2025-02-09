@@ -12,7 +12,7 @@ options = webdriver.ChromeOptions()
 options.add_argument("--disable-gpu")
 options.add_argument("--window-size=1920x1080")  # Full screen
 # options.add_argument("--headless")  # Uncomment this to run without GUI
-DM_GROUP_NAME = "🏋️‍♀️സാത്യൂസ് FiTStoP 💪"
+DM_GROUP_ID = "1212682433683963904"
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
@@ -28,37 +28,36 @@ try:
 
     print("✅ Cookies loaded! No login required.")
 
-    # Refresh the page to apply cookies
-    driver.get("https://twitter.com/messages")
+    # Refresh to apply cookies and navigate directly to the group chat
+    driver.get(f"https://twitter.com/messages/{DM_GROUP_ID}")
 
-    # Wait until the messages page loads
+    # Wait for messages to load
     wait = WebDriverWait(driver, 10)
-    wait.until(EC.url_contains("messages"))
-    time.sleep(5)  # Allow time for chat to load
+    wait.until(EC.url_contains(f"messages/{DM_GROUP_ID}"))
+    time.sleep(5)  # Allow chat to load
 
-    # Locate the Specific Group Chat
-    print(f"🔍 Searching for group chat: {DM_GROUP_NAME}...")
-
-    group_chat = wait.until(
-        EC.presence_of_element_located((By.XPATH, f"//span[contains(text(), '{DM_GROUP_NAME}')]"))
-    )
-    group_chat.click()
-    print(f"✅ Opened group chat: {DM_GROUP_NAME}")
-
-    time.sleep(5)  # Allow chat messages to load
-
-    # Extract Messages from the Group Chat
     print("📩 Extracting messages from the group chat...")
 
+    # Scroll multiple times to load all messages from January
+    for _ in range(10):  # Adjust the range based on message history
+        driver.execute_script("window.scrollBy(0, -500);")
+        time.sleep(2)
+
+    # Extract messages and timestamps
     messages = driver.find_elements(By.XPATH, "//div[@data-testid='messageEntry']")
-    
-    with open("group_dm_messages.txt", "w", encoding="utf-8") as file:
+    timestamps = driver.find_elements(By.XPATH, "//time")  # Extract timestamps
+
+    with open("january_messages.txt", "w", encoding="utf-8") as file:
         for index, msg in enumerate(messages):
             message_text = msg.text.strip()
-            print(f"📩 Message {index+1}: {message_text}\n")
-            file.write(f"Message {index+1}: {message_text}\n")
+            message_date = timestamps[index].get_attribute("datetime")  # Extracts full timestamp
 
-    print("✅ Done extracting messages! Saved in 'group_dm_messages.txt'")
+            # Convert timestamp to readable format (e.g., "2024-01-15T12:34:56.000Z")
+            if message_date.startswith("2024-01"):  # Only keep messages from January
+                print(f"📩 {message_date}: {message_text}\n")
+                file.write(f"{message_date}: {message_text}\n")
+
+    print("✅ Done extracting messages from January! Saved in 'january_messages.txt'")
 
 except Exception as e:
     print("❌ Error:", str(e))
